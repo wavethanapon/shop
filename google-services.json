@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "709011913985",
+    "project_id": "shop-bf350",
+    "storage_bucket": "shop-bf350.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:709011913985:android:e12ba3639182a898ae6f00",
+        "android_client_info": {
+          "package_name": "com.myshopname.shopapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-CVeDprdBbZmOdGSYFsTZ4bG-XBCfnoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
