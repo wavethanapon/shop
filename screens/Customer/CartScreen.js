@@ -1,11 +1,7 @@
-import React from 'react';
 import { View, Text, StyleSheet, FlatList, Button, Image, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useCart } from '../../context/CartContext';
-import { db } from '../../firebaseConfig'; 
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { useAuth } from '../../context/AuthContext';
 
 const CartScreen = () => {
     const navigation = useNavigation();

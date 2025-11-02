@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert, } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { useAuth } from '../../context/AuthContext';
-import { db, auth } from '../../firebaseConfig'; 
+import { db } from '../../firebaseConfig'; 
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore'; 
 
 const OrderHistoryScreen = () => {
@@ -65,7 +65,7 @@ const OrderHistoryScreen = () => {
         const status = getStatusStyle(item.status);
 
         return (
-            <TouchableOpacity style={styles.orderCard} onPress={() => {/* ไปหน้ารายละเอียดคำสั่งซื้อ */}}>
+            <TouchableOpacity style={styles.orderCard} onPress={() => {}}>
                 <View style={styles.headerRow}>
                     <Text style={styles.orderIdText}>#ODR-{item.id.substring(0, 6).toUpperCase()}</Text>
                     <Text style={[styles.statusBadge, { backgroundColor: status.color }]}>{status.text}</Text>

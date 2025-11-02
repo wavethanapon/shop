@@ -1,11 +1,7 @@
-// screens/Owner/SalesReportScreen.js
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
-// ต้องติดตั้งไลบรารีเหล่านี้ก่อน: npm install react-native-chart-kit react-native-svg
 import { LineChart } from 'react-native-chart-kit'; 
-// import { MaterialIcons } from '@expo/vector-icons'; // ไม่ได้ใช้ในโค้ดสุดท้าย
 
-// ข้อมูลจำลองสำหรับกราฟรายวัน (7 วันที่ผ่านมา)
 const dailyData = {
     labels: ["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"],
     datasets: [
@@ -18,7 +14,6 @@ const dailyData = {
     legend: ["ยอดขายรายวัน (บาท)"]
 };
 
-// ข้อมูลจำลองสำหรับกราฟรายสัปดาห์ (4 สัปดาห์ที่ผ่านมา)
 const weeklyData = {
     labels: ["ส.1", "ส.2", "ส.3", "ส.4"],
     datasets: [
@@ -34,7 +29,7 @@ const weeklyData = {
 const screenWidth = Dimensions.get("window").width;
 
 const SalesReportScreen = () => {
-    const [reportType, setReportType] = useState('daily'); // 'daily' หรือ 'weekly'
+    const [reportType, setReportType] = useState('daily'); 
     
     const chartData = reportType === 'daily' ? dailyData : weeklyData;
     const totalSales = chartData.datasets[0].data.reduce((sum, value) => sum + value, 0);
@@ -52,7 +47,6 @@ const SalesReportScreen = () => {
         <ScrollView style={styles.container}>
             <Text style={styles.header}>สรุปยอดขาย (5.9) 📈</Text>
 
-            {/* ปุ่มสลับรายงาน */}
             <View style={styles.tabContainer}>
                 <TouchableOpacity 
                     style={[styles.tabButton, reportType === 'daily' && styles.activeTab]}
@@ -68,7 +62,6 @@ const SalesReportScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* กล่องสรุปยอดขายรวม */}
             <View style={styles.summaryBox}>
                 <Text style={styles.summaryLabel}>ยอดขายรวมทั้งหมด:</Text>
                 <Text style={styles.summaryValue}>
@@ -78,7 +71,6 @@ const SalesReportScreen = () => {
 
             <Text style={styles.chartTitle}>กราฟยอดขาย {reportType === 'daily' ? 'รายวัน' : 'รายสัปดาห์'}</Text>
             
-            {/* กราฟเส้น (LineChart) */}
             <View style={styles.chartWrapper}>
                 <LineChart
                     data={chartData}

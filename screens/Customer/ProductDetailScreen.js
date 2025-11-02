@@ -1,25 +1,20 @@
-// screens/Customer/ProductDetailScreen.js
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Button, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useCart } from '../../context/CartContext'; // <--- เชื่อมต่อกับตะกร้าสินค้า
+import { useCart } from '../../context/CartContext'; 
 
 const ProductDetailScreen = () => {
     const route = useRoute();
     const navigation = useNavigation();
     
-    // ดึงฟังก์ชัน addToCart จาก Context
     const { addToCart } = useCart(); 
 
-    // ดึงข้อมูลสินค้าที่ส่งมาจาก route.params
     const { product } = route.params; 
 
-    // สถานะสำหรับเลือกจำนวนสินค้า
     const [quantity, setQuantity] = useState(1);
     const maxStock = product.stock; 
 
-    // ตั้งค่า Header Title
     React.useLayoutEffect(() => {
         navigation.setOptions({
             title: product.name,
@@ -35,10 +30,8 @@ const ProductDetailScreen = () => {
     };
 
     const handleAddToCart = () => {
-        // เรียกใช้ฟังก์ชัน addToCart จาก Context เพื่อเพิ่มสินค้า
         addToCart(product, quantity);
         
-        // นำทางไปยังหน้าตะกร้าสินค้า
         navigation.navigate('Cart'); 
     };
     
@@ -72,7 +65,6 @@ const ProductDetailScreen = () => {
                     </Text>
                 </View>
 
-                {/* ส่วนเลือกจำนวนสินค้า */}
                 {!isOutOfStock && (
                     <View style={styles.quantityControl}>
                         <Text style={styles.quantityLabel}>จำนวน:</Text>
@@ -95,7 +87,6 @@ const ProductDetailScreen = () => {
                 )}
             </View>
 
-            {/* แถบด้านล่างสำหรับราคารวมและปุ่มสั่งซื้อ */}
             <View style={styles.bottomBar}>
                 <View style={styles.totalPrice}>
                     <Text style={styles.totalLabel}>ราคารวม:</Text>
@@ -116,7 +107,6 @@ const ProductDetailScreen = () => {
     );
 };
 
-// ... Stylesheets ...
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fff' },
     productImage: { width: '100%', height: 300 },
@@ -126,15 +116,18 @@ const styles = StyleSheet.create({
     currentPrice: { fontSize: 22, fontWeight: 'bold', color: '#FF5722' },
     descriptionText: { fontSize: 16, color: '#555', lineHeight: 24, marginBottom: 20 },
     stockRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-    // ... สไตล์อื่นๆ ...
-    quantityControl: { /* ... style ... */ },
+    quantityControl: { flexDirection: 'row', alignItems: 'center' },
     bottomBar: { 
         position: 'absolute', bottom: 0, width: '100%', flexDirection: 'row', 
         justifyContent: 'space-between', paddingVertical: 15, paddingHorizontal: 20,
         backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#eee',
     },
     totalValue: { fontSize: 24, fontWeight: 'bold', color: '#4CAF50' },
-    addToCartButton: { /* ... style ... */ },
+    addToCartButton: { 
+        flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF9800', 
+        paddingVertical: 10, paddingHorizontal: 15, borderRadius: 5 
+    },
+    addToCartText: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
     disabledButton: { backgroundColor: '#ccc' }
 });
 

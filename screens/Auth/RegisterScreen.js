@@ -1,13 +1,12 @@
-// screens/Auth/RegisterScreen.js
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { useState } from 'react';
+import { Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useAuth } from '../../context/AuthContext'; // ต้องแน่ใจว่า path ถูกต้อง
+import { useAuth } from '../../context/AuthContext'; 
 
 const RegisterScreen = () => {
     const navigation = useNavigation();
-    const { signUp } = useAuth(); // ดึงฟังก์ชัน signUp จาก Context
+    const { signUp } = useAuth(); 
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -29,14 +28,11 @@ const RegisterScreen = () => {
             return;
         }
 
-        // ใช้งาน Firebase Sign Up
         const success = await signUp(email, password);
         
         if (success) {
-            // ถ้าสำเร็จ Firebase จะจัดการการล็อกอินอัตโนมัติ (ผ่าน onAuthStateChanged)
-            // เราอาจจะนำทางไปหน้าหลัก หรือให้ผู้ใช้ล็อกอินอีกครั้ง
             Alert.alert("สำเร็จ", "คุณสามารถล็อกอินเข้าสู่ระบบได้แล้ว");
-            navigation.navigate('Login'); // กลับไปหน้า Login
+            navigation.navigate('Login'); 
         }
     };
 

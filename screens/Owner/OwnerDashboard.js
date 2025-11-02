@@ -1,9 +1,8 @@
-// screens/Owner/OwnerDashboard.js
-import React, { useState } from 'react'; // ต้องมี useState เพื่อจัดการสถานะการแจ้งเตือน
+import { useState } from 'react'; 
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons'; 
-import { useAuth } from '../../context/AuthContext'; // ต้องนำเข้า useAuth เพื่อใช้ฟังก์ชัน logout
+import { useAuth } from '../../context/AuthContext'; 
 
 const ownerMenuItems = [
     { 
@@ -12,55 +11,50 @@ const ownerMenuItems = [
         icon: 'inventory', 
         color: '#4CAF50', 
         target: 'ProductList' 
-    }, // 5.3, 5.4
+    }, 
     { 
         id: 'view_orders', 
         title: 'คำสั่งซื้อทั้งหมด', 
         icon: 'list-alt', 
         color: '#2196F3', 
         target: 'ViewOrders' 
-    }, // 5.5, 5.6
+    }, 
     { 
         id: 'sales_report', 
         title: 'สรุปยอดขาย', 
         icon: 'bar-chart', 
         color: '#FF9800', 
         target: 'SalesReport' 
-    }, // 5.9
+    }, 
     { 
         id: 'pos_sale', 
         title: 'ขายหน้าร้าน (POS)', 
         icon: 'point-of-sale', 
         color: '#9C27B0', 
         target: 'PosSale' 
-    }, // 5.10
+    }, 
     { 
         id: 'user_profile', 
         title: 'จัดการโปรไฟล์', 
         icon: 'settings', 
         color: '#607D8B', 
         target: 'Profile' 
-    }, // 6.1
+    }, 
 ];
-
-// ----------------------------------------------------
-// ข้อมูลการแจ้งเตือนจำลอง (5.7, 5.8)
-// ----------------------------------------------------
 const MOCK_NOTIFICATIONS = {
-    newOrders: 3, // 5.7: จำนวนคำสั่งซื้อใหม่ที่ต้องดำเนินการ
-    lowStockItems: [ // 5.8: สินค้าที่ใกล้หมดหรือหมดแล้ว
-        { name: 'ชาเขียวปั่น', stock: 0, status: 'หมดแล้ว' },
-        { name: 'เค้กช็อกโกแลต', stock: 2, status: 'ใกล้หมด' },
+    newOrders: 3, 
+    lowStockItems: [ 
+        { name: 'ไส้กรอกแดง', stock: 0, status: 'หมดแล้ว' },
+        { name: 'กุ้งระเบิด', stock: 8, status: 'ใกล้หมด' },
     ],
 };
 
 
 const OwnerDashboard = () => {
     const navigation = useNavigation();
-    const { logout } = useAuth(); // ดึงฟังก์ชัน logout
-    const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS); // สถานะการแจ้งเตือน
+    const { logout } = useAuth(); 
+    const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS); 
 
-    // ฟังก์ชันสำหรับ Render เมนู Grid
     const renderMenuItem = (item) => (
         <TouchableOpacity 
             key={item.id} 
@@ -72,12 +66,10 @@ const OwnerDashboard = () => {
         </TouchableOpacity>
     );
 
-    // ฟังก์ชันสำหรับ Render แถบแจ้งเตือน (5.7, 5.8)
     const renderNotifications = () => {
         const { newOrders, lowStockItems } = notifications;
         let elements = [];
 
-        // 1. การแจ้งเตือนคำสั่งซื้อใหม่ (5.7)
         if (newOrders > 0) {
             elements.push(
                 <TouchableOpacity 
@@ -93,7 +85,6 @@ const OwnerDashboard = () => {
             );
         }
 
-        // 2. การแจ้งเตือนสินค้าใกล้หมด/หมดแล้ว (5.8)
         lowStockItems.forEach((item, index) => {
             const color = item.stock === 0 ? '#C62828' : '#FBC02D';
             const icon = item.stock === 0 ? 'cancel' : 'warning';
@@ -122,13 +113,11 @@ const OwnerDashboard = () => {
                     <Text style={styles.welcomeText}>ยินดีต้อนรับ, เจ้าของร้าน 👋</Text>
                     <Text style={styles.subtitle}>ระบบจัดการงานเบื้องหลัง</Text>
                 </View>
-                {/* ปุ่ม Logout */}
                 <TouchableOpacity onPress={logout} style={styles.logoutButton}>
                     <MaterialIcons name="exit-to-app" size={24} color="#D32F2F" />
                 </TouchableOpacity>
             </View>
             
-            {/* ส่วนแสดงแถบแจ้งเตือน */}
             <View style={styles.notificationsContainer}>
                 {renderNotifications()}
                 {notifications.newOrders === 0 && notifications.lowStockItems.length === 0 && (
@@ -136,7 +125,6 @@ const OwnerDashboard = () => {
                 )}
             </View>
 
-            {/* ส่วน Menu Grid */}
             <View style={styles.menuGrid}>
                 {ownerMenuItems.map(renderMenuItem)}
             </View>

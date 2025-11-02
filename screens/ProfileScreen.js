@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Button } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, Alert, Button } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext'; 
 import { db } from '../firebaseConfig'; 
@@ -57,22 +57,18 @@ const styles = StyleSheet.create({
 
     const isOwner = userRole === 'owner';
 
-    // ฟังก์ชันจัดการการบันทึกข้อมูลส่วนตัว (3.1, 6.1)
     const handleSaveProfile = () => {
         if (!name || !phone) {
             Alert.alert("ข้อผิดพลาด", "กรุณากรอกชื่อและเบอร์โทรศัพท์ให้ครบถ้วน");
             return;
         }
 
-        // *** ในแอปจริง: เรียก API เพื่ออัปเดตชื่อและเบอร์โทรศัพท์ ***
         Alert.alert(
             "บันทึกสำเร็จ", 
             `ข้อมูลโปรไฟล์ (${userRole}) ถูกอัปเดตแล้ว: \nชื่อ: ${name}\nโทรศัพท์: ${phone}`
         );
-        // ในแอปจริงควรอัปเดต Context/Local State ด้วย
     };
 
-    // ฟังก์ชันจัดการการเปลี่ยนรหัสผ่าน (3.2, 6.1)
     const handleChangePassword = () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
             Alert.alert("ข้อผิดพลาด", "กรุณากรอกรหัสผ่านให้ครบถ้วน");
@@ -89,13 +85,11 @@ const styles = StyleSheet.create({
             return;
         }
 
-        // *** ในแอปจริง: เรียก API เพื่อเปลี่ยนรหัสผ่าน โดยส่ง currentPassword ไปยืนยันด้วย ***
         Alert.alert(
             "เปลี่ยนรหัสผ่านสำเร็จ", 
             "รหัสผ่านของคุณถูกเปลี่ยนเรียบร้อยแล้ว"
         );
         
-        // ล้างฟอร์ม
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -107,7 +101,6 @@ const styles = StyleSheet.create({
                 {isOwner ? 'จัดการโปรไฟล์เจ้าของร้าน (6.1)' : 'จัดการโปรไฟล์ลูกค้า (3.1, 3.2)'}
             </Text>
 
-            {/* ส่วนข้อมูลหลัก */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}><MaterialIcons name="person" size={20} color="#333" /> ข้อมูลส่วนตัว</Text>
                 
@@ -143,8 +136,6 @@ const styles = StyleSheet.create({
                     />
                 </View>
             </View>
-
-            {/* ส่วนเปลี่ยนรหัสผ่าน */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}><MaterialIcons name="lock" size={20} color="#333" /> เปลี่ยนรหัสผ่าน</Text>
                 

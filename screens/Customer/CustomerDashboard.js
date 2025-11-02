@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -7,47 +6,40 @@ import { useCart } from '../../context/CartContext';
 const MOCK_PRODUCTS = [
     { 
         id: 'p1', 
-        name: 'กาแฟลาเต้เย็น', 
-        price: 75.00, 
-        stock: 15, 
-        imageUrl: 'https://via.placeholder.com/150/00bcd4/ffffff?text=Latte' 
+        name: 'ลูกชิ้นหมู', 
+        price: 10.00, 
+        stock: 25, 
+        imageUrl: 'https://encrypted-tbn2.gstatic.com/licensed-image?q=tbn:ANd9GcQfdvL-8qjOL1fLS4N34TfTgxzvvZaFrTojvlneQoHyS2f3c9MmXUYLW0Uc5BdfQNRR6G58qZKLp8cdITszxnMESi4nEwiQdDXWIFsjihld57U4KNc' 
     },
     { 
         id: 'p2', 
-        name: 'ชาเขียวปั่นวิปครีม', 
-        price: 90.00, 
-        stock: 8, 
-        imageUrl: 'https://via.placeholder.com/150/4CAF50/ffffff?text=Matcha' 
+        name: 'ไส้กรอกแดง', 
+        price: 5.00, 
+        stock: 0, 
+        imageUrl: 'https://s.isanook.com/wo/0/ud/50/252701/252701-thumbnail.jpg' 
     },
     { 
         id: 'p3', 
-        name: 'เค้กช็อกโกแลตหน้านิ่ม', 
-        price: 90.00, 
-        stock: 2, 
-        imageUrl: 'https://via.placeholder.com/150/FF9800/ffffff?text=Cake' 
+        name: 'กุ้งระเบิด', 
+        price: 10.00, 
+        stock: 8, 
+        imageUrl: 'https://img.wongnai.com/p/400x0/2020/02/07/8ea870f6c9564eb691db85b694fe7694.jpg' 
     },
     { 
         id: 'p4', 
-        name: 'เอสเพรสโซ่ร้อน', 
-        price: 60.00, 
-        stock: 0, 
-        imageUrl: 'https://via.placeholder.com/150/607D8B/ffffff?text=Espresso' 
-    },
-    { 
-        id: 'p5', 
-        name: 'น้ำส้มคั้นสด', 
-        price: 55.00, 
+        name: 'ไส้กรอกชีส', 
+        price: 10.00, 
         stock: 20, 
-        imageUrl: 'https://via.placeholder.com/150/FFC107/ffffff?text=Orange' 
-    },
+        imageUrl: 'https://www.jandoprocessing.com/wp-content/uploads/2020/06/cheese-sausage-02.jpg' 
+    },    
 ];
 
 const screenWidth = Dimensions.get('window').width;
-const itemWidth = (screenWidth / 2) - 15; // 2 คอลัมน์ ลบ padding
+const itemWidth = (screenWidth / 2) - 15; 
 
 const CustomerDashboard = () => {
     const navigation = useNavigation();
-    const { cartItemCount } = useCart(); // ดึงจำนวนสินค้าในตะกร้าจาก Context
+    const { cartItemCount } = useCart(); 
 
     const renderProductItem = ({ item }) => {
         const isOutOfStock = item.stock <= 0;
@@ -80,7 +72,6 @@ const CustomerDashboard = () => {
             <View style={styles.header}>
                 <Text style={styles.title}>เมนูยอดนิยม</Text>
                 <View style={styles.headerIcons}>
-                    {/* ปุ่ม Cart (4.2) */}
                     <TouchableOpacity onPress={() => navigation.navigate('Cart')} style={styles.cartButton}>
                         <MaterialIcons name="shopping-cart" size={28} color="#4CAF50" />
                         {cartItemCount > 0 && (
@@ -90,7 +81,6 @@ const CustomerDashboard = () => {
                         )}
                     </TouchableOpacity>
                     
-                    {/* ปุ่ม Profile (3.1) */}
                     <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
                         <MaterialIcons name="account-circle" size={28} color="#2196F3" />
                     </TouchableOpacity>

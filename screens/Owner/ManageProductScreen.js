@@ -1,15 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    View, 
-    Text, 
-    StyleSheet, 
-    ScrollView, 
-    TextInput, 
-    Button, 
-    Alert, 
-    Image, 
-    TouchableOpacity 
-} from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, Button, Alert, Image, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker'; 
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -52,7 +42,6 @@ const ManageProductScreen = () => {
         }
     };
 
-    // ฟังก์ชันสำหรับบันทึก/อัปเดตข้อมูลสินค้า (5.3)
     const handleSaveProduct = () => {
         if (!name || !price || !stock || !imageUri) {
             Alert.alert("ข้อมูลไม่ครบถ้วน", "กรุณากรอกชื่อ ราคา สต็อก และอัปโหลดรูปภาพ");
@@ -81,10 +70,10 @@ const ManageProductScreen = () => {
     return (
         <ScrollView style={styles.container}>
             <Text style={styles.header}>
-                {existingProduct ? 'แก้ไขสินค้า (5.3)' : 'เพิ่มสินค้าใหม่ (5.3)'}
+                {existingProduct ? 'แก้ไขสินค้า ' : 'เพิ่มสินค้าใหม่ '}
             </Text>
 
-            <Text style={styles.label}>รูปภาพสินค้า (5.4):</Text>
+            <Text style={styles.label}>รูปภาพสินค้า :</Text>
             <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
                 {imageUri ? (
                     <Image source={{ uri: imageUri }} style={styles.productImage} />

@@ -1,10 +1,8 @@
-// screens/Owner/POSScreen.js
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, FlatList } from 'react-native';
+import { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, FlatList } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-// ข้อมูลสินค้าจำลอง
 const MOCK_PRODUCTS = [
     { id: 'p1', name: 'กาแฟเย็น', price: 60, stock: 15 },
     { id: 'p2', name: 'ชาเขียวปั่น', price: 75, stock: 0 }, 
@@ -16,7 +14,6 @@ const POSScreen = () => {
     const [posCart, setPosCart] = useState([]);
     const navigation = useNavigation();
 
-    // 1. ฟังก์ชันเพิ่มสินค้า/เพิ่มจำนวนในตะกร้า
     const handleAddProduct = (product) => {
         const itemInStock = MOCK_PRODUCTS.find(p => p.id === product.id && p.stock > 0);
         if (!itemInStock) {
@@ -40,7 +37,6 @@ const POSScreen = () => {
         });
     };
 
-    // 2. ฟังก์ชันลดจำนวนสินค้า
     const handleRemoveProduct = (productId) => {
         setPosCart(prevCart => {
             const existingItem = prevCart.find(item => item.id === productId);
@@ -55,7 +51,6 @@ const POSScreen = () => {
         });
     };
 
-    // 3. ฟังก์ชันจบรายการขาย (Checkout)
     const handleCheckout = () => {
         if (posCart.length === 0) {
             Alert.alert("ตะกร้าว่าง", "กรุณาเพิ่มสินค้าก่อนทำการขาย");
@@ -72,9 +67,8 @@ const POSScreen = () => {
                 { 
                     text: "ยืนยันขาย", 
                     onPress: () => {
-                        // ** ฟังก์ชันนี้คือการจำลองการลดสต็อกสินค้าทันที (5.10) **
                         Alert.alert("ขายสำเร็จ!", `รายการขายถูกบันทึกและตัดสต็อกเรียบร้อยแล้ว`);
-                        setPosCart([]); // ล้างตะกร้า
+                        setPosCart([]); 
                     }
                 }
             ]
@@ -85,7 +79,6 @@ const POSScreen = () => {
 
     return (
         <View style={styles.container}>
-            {/* -------------------- ส่วนที่ 1: รายการสินค้าทั้งหมด -------------------- */}
             <View style={styles.productListContainer}>
                 <Text style={styles.sectionTitle}>เลือกสินค้า</Text>
                 <FlatList
@@ -106,7 +99,6 @@ const POSScreen = () => {
                 />
             </View>
 
-            {/* -------------------- ส่วนที่ 2: ตะกร้าสินค้า POS -------------------- */}
             <View style={styles.cartContainer}>
                 <Text style={styles.sectionTitle}>ตะกร้าสินค้า</Text>
                 <ScrollView style={styles.cartList}>
@@ -133,7 +125,6 @@ const POSScreen = () => {
                     )}
                 </ScrollView>
 
-                {/* สรุปยอดรวมและปุ่มชำระเงิน */}
                 <View style={styles.checkoutBox}>
                     <Text style={styles.totalLabel}>ยอดรวมสุทธิ:</Text>
                     <Text style={styles.totalAmount}>฿{totalAmount.toFixed(2)}</Text>
@@ -152,7 +143,5 @@ const POSScreen = () => {
     );
 };
 
-// ... Stylesheets ... 
-// (ละเว้นส่วน styles เพื่อความกระชับในการสรุป)
 
 export default POSScreen;

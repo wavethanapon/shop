@@ -1,13 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    View, 
-    Text, 
-    StyleSheet, 
-    FlatList, 
-    ActivityIndicator, 
-    TouchableOpacity,
-    Alert 
-} from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -16,7 +8,6 @@ import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase
 
 const ViewOrdersScreen = () => {
     const navigation = useNavigation();
-
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -117,7 +108,6 @@ const ViewOrdersScreen = () => {
                 <TouchableOpacity 
                     style={styles.detailButton} 
                     onPress={() => {
-                        // ** ในแอปจริง ควรนำทางไปหน้า OrderDetailScreen **
                         Alert.alert("รายละเอียด", "แสดงรายละเอียดสินค้าและหลักฐานการโอนเงิน");
                     }}
                 >
@@ -250,7 +240,6 @@ const styles = StyleSheet.create({
         marginTop: 5,
         textAlign: 'right',
     },
-    // ปุ่ม
     detailButton: {
         marginTop: 10,
         padding: 8,

@@ -4,22 +4,18 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialIcons } from '@expo/vector-icons'; 
 
-// === 1. Context Providers ===
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext'; 
 
-// === 2. Auth Screens (สำหรับผู้ใช้ทุกคน) ===
 import LoginScreen from './screens/Auth/LoginScreen';
 import RegisterScreen from './screens/Auth/RegisterScreen';
 
-// === 3. Customer Screens (สำหรับลูกค้า) ===
 import CustomerDashboard from './screens/Customer/CustomerDashboard';
 import ProductDetailScreen from './screens/Customer/ProductDetailScreen';
 import CartScreen from './screens/Customer/CartScreen';
 import PaymentScreen from './screens/Customer/PaymentScreen';
 import OrderHistoryScreen from './screens/Customer/OrderHistoryScreen';
 
-// === 4. Owner Screens (สำหรับเจ้าของร้าน) ===
 import OwnerDashboard from './screens/Owner/OwnerDashboard';
 import ProductListScreen from './screens/Owner/ProductListScreen';
 import ManageProductScreen from './screens/Owner/ManageProductScreen';
@@ -28,15 +24,10 @@ import OrderDetailScreen from './screens/Owner/OrderDetailScreen';
 import SalesReportScreen from './screens/Owner/SalesReportScreen';
 import POSScreen from './screens/Owner/POSScreen';
 
-// === 5. General Screens ===
 import ProfileScreen from './screens/ProfileScreen';
-// 
 
-// === 6. fri ===
-//
 const Stack = createNativeStackNavigator();
 
-// --- Auth Stack (สำหรับผู้ที่ยังไม่ได้เข้าสู่ระบบ) ---
 const AuthStack = () => (
     <Stack.Navigator>
         <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'เข้าสู่ระบบ' }} />
@@ -44,11 +35,9 @@ const AuthStack = () => (
     </Stack.Navigator>
 );
 
-// --- App Stack (สำหรับผู้ที่เข้าสู่ระบบแล้ว) ---
 const AppStack = () => {
     const { userRole, logout } = useAuth();
-    
-    // Header component สำหรับปุ่ม Logout
+
     const LogoutButton = () => (
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
             <MaterialIcons name="logout" size={24} color="#D32F2F" />
@@ -62,18 +51,15 @@ const AppStack = () => {
             headerStyle: { backgroundColor: '#f5f5f5' },
             headerTitleStyle: { fontWeight: 'bold' }
         }}>
-            {/* หน้าจอหลักตามบทบาท */}
             <Stack.Screen 
                 name={userRole === 'owner' ? "OwnerHome" : "CustomerHome"}
                 component={userRole === 'owner' ? OwnerDashboard : CustomerDashboard}
                 options={{ 
                     title: userRole === 'owner' ? 'แดชบอร์ดเจ้าของร้าน' : 'หน้าหลัก',
-                    // ไม่แสดงปุ่ม Logout บนหน้า Login/Register แต่แสดงบน Home
                     headerRight: () => <LogoutButton />, 
                 }}
             />
             
-            {/* === Owner Routes (5.x, 6.1) === */}
             {userRole === 'owner' && (
                 <>
                     <Stack.Screen name="ProductList" component={ProductListScreen} options={{ title: 'จัดการสินค้า' }} />
@@ -86,7 +72,6 @@ const AppStack = () => {
                 </>
             )}
 
-            {/* === Customer Routes (4.x, 3.x) === */}
             {userRole === 'customer' && (
                 <>
                     <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'รายละเอียดสินค้า' }} />
@@ -100,7 +85,6 @@ const AppStack = () => {
     );
 };
 
-// --- Root Navigator (จัดการการเปลี่ยนหน้าจอหลัก) ---
 const RootNavigator = () => {
     const { isAuthenticated, isLoading } = useAuth();
 
@@ -113,16 +97,13 @@ const RootNavigator = () => {
         );
     }
 
-    // แสดง Auth Stack หากยังไม่ได้เข้าสู่ระบบ
     return isAuthenticated ? <AppStack /> : <AuthStack />;
 };
 
 
-// === 6. App Component หลัก (ห่อหุ้มด้วย Context Providers) ===
 export default function App() {
   return (
     <AuthProvider>
-        {/* CartProvider ต้องอยู่ใต้ AuthProvider เพื่อให้หน้าจอ AppStack เข้าถึงได้ */}
         <CartProvider>
             <NavigationContainer>
                 <RootNavigator />

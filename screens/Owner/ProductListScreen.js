@@ -1,22 +1,19 @@
-// screens/Owner/ProductListScreen.js
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-// ข้อมูลสินค้าจำลอง (Mock Data)
 const MOCK_PRODUCTS = [
-    { id: 'p1', name: 'กาแฟเย็น', price: 60, stock: 15, imageUrl: 'https://via.placeholder.com/150/00bcd4/ffffff?text=Coffee' },
-    { id: 'p2', name: 'ชาเขียวปั่น', price: 75, stock: 0, imageUrl: 'https://via.placeholder.com/150/4CAF50/ffffff?text=Matcha' },
-    { id: 'p3', name: 'เค้กช็อกโกแลต', price: 90, stock: 8, imageUrl: 'https://via.placeholder.com/150/FF9800/ffffff?text=Cake' },
-    { id: 'p4', name: 'แซนวิชแฮมชีส', price: 45, stock: 20, imageUrl: 'https://via.placeholder.com/150/9C27B0/ffffff?text=Sandwich' },
+    { id: 'p1', name: 'ลูกชิ้นหมู', price: 10, stock: 25, imageUrl: 'https://encrypted-tbn2.gstatic.com/licensed-image?q=tbn:ANd9GcQfdvL-8qjOL1fLS4N34TfTgxzvvZaFrTojvlneQoHyS2f3c9MmXUYLW0Uc5BdfQNRR6G58qZKLp8cdITszxnMESi4nEwiQdDXWIFsjihld57U4KNc' },
+    { id: 'p2', name: 'ไส้กรอกแดง', price: 5, stock: 0, imageUrl: 'https://s.isanook.com/wo/0/ud/50/252701/252701-thumbnail.jpg' },
+    { id: 'p3', name: 'กุ้งระเบิด', price: 10, stock: 8, imageUrl: 'https://img.wongnai.com/p/400x0/2020/02/07/8ea870f6c9564eb691db85b694fe7694.jpg' },
+    { id: 'p4', name: 'ไส้กรอกชีส', price: 10, stock: 20, imageUrl: 'https://www.jandoprocessing.com/wp-content/uploads/2020/06/cheese-sausage-02.jpg' },
 ];
 
 const ProductListScreen = () => {
     const navigation = useNavigation();
-    const [products, setProducts] = useState(MOCK_PRODUCTS); // ใช้ State เพื่อจำลองการลบ/อัปเดต
+    const [products, setProducts] = useState(MOCK_PRODUCTS); 
 
-    // 5.3: ฟังก์ชันจำลองการลบสินค้า
     const handleDeleteProduct = (productId) => {
         Alert.alert(
             "ยืนยันการลบสินค้า",
@@ -27,7 +24,6 @@ const ProductListScreen = () => {
                     text: "ลบ", 
                     style: "destructive",
                     onPress: () => {
-                        // *** ในแอปจริง: เรียก API เพื่อลบสินค้า ***
                         setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
                         Alert.alert("สำเร็จ", "สินค้าถูกลบเรียบร้อยแล้ว");
                     }
@@ -51,7 +47,6 @@ const ProductListScreen = () => {
                 </View>
 
                 <View style={styles.actionButtons}>
-                    {/* 5.4: ปุ่มแก้ไขสินค้า (นำทางไป ManageProductScreen) */}
                     <TouchableOpacity 
                         style={[styles.actionButton, styles.editButton]}
                         onPress={() => navigation.navigate('ManageProduct', { product: item })}
@@ -59,7 +54,6 @@ const ProductListScreen = () => {
                         <MaterialIcons name="edit" size={24} color="#fff" />
                     </TouchableOpacity>
 
-                    {/* 5.3: ปุ่มลบสินค้า */}
                     <TouchableOpacity 
                         style={[styles.actionButton, styles.deleteButton]}
                         onPress={() => handleDeleteProduct(item.id)}
@@ -73,15 +67,14 @@ const ProductListScreen = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>จัดการรายการสินค้า (5.3)</Text>
+            <Text style={styles.header}>จัดการรายการสินค้า </Text>
             
-            {/* ปุ่มเพิ่มสินค้าใหม่ */}
             <TouchableOpacity 
                 style={styles.addButton}
-                onPress={() => navigation.navigate('ManageProduct', { product: null })} // ส่ง null สำหรับการเพิ่มใหม่
+                onPress={() => navigation.navigate('ManageProduct', { product: null })} 
             >
                 <MaterialIcons name="add" size={24} color="#fff" />
-                <Text style={styles.addButtonText}>เพิ่มสินค้าใหม่ (5.4)</Text>
+                <Text style={styles.addButtonText}>เพิ่มสินค้าใหม่ </Text>
             </TouchableOpacity>
 
             <FlatList
