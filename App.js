@@ -81,7 +81,7 @@ const AppStack = () => {
                     <Stack.Screen name="ViewOrders" component={ViewOrdersScreen} options={{ title: 'คำสั่งซื้อทั้งหมด' }} />
                     <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ title: 'รายละเอียดคำสั่งซื้อ' }} />
                     <Stack.Screen name="SalesReport" component={SalesReportScreen} options={{ title: 'สรุปยอดขาย' }} />
-                    <Stack.Screen name="PosSale" component={POSScreen} options={{ title: 'ขายหน้าร้าน (POS)' }} />
+                    {/*<Stack.Screen name="PosSale" component={POSScreen} options={{ title: 'ขายหน้าร้าน (POS)' }} />*/}
                     <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'จัดการโปรไฟล์' }} />
                 </>
             )}

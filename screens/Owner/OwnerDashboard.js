@@ -5,9 +5,6 @@ import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons'; 
 import { useAuth } from '../../context/AuthContext'; // ต้องนำเข้า useAuth เพื่อใช้ฟังก์ชัน logout
 
-// ----------------------------------------------------
-// ข้อมูลเมนูสำหรับเจ้าของร้าน
-// ----------------------------------------------------
 const ownerMenuItems = [
     { 
         id: 'manage_products', 
