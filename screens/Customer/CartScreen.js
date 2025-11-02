@@ -1,23 +1,18 @@
-// screens/Customer/CartScreen.js
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, Button, Image, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useCart } from '../../context/CartContext'; // *** นำเข้า useCart จาก Context ***
+import { useCart } from '../../context/CartContext';
+import { db } from '../../firebaseConfig'; 
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { useAuth } from '../../context/AuthContext';
 
 const CartScreen = () => {
     const navigation = useNavigation();
     
-    // *** ดึง State และฟังก์ชันที่ต้องการจาก Context ***
     const { 
-        cartItems, // รายการสินค้าในตะกร้า
-        cartTotal, // ยอดรวม
-        updateQuantity, // อัปเดตจำนวน (เพิ่ม/ลด)
-        removeItem, // ลบสินค้าออก
-        clearCart // ล้างตะกร้าทั้งหมด
-    } = useCart(); 
+        cartItems, cartTotal, updateQuantity, removeItem, clearCart } = useCart(); 
 
-    // ฟังก์ชันสำหรับ Render รายการสินค้าแต่ละชิ้น
     const renderCartItem = ({ item }) => (
         <View style={styles.cartItem}>
             <Image source={{ uri: item.imageUrl || 'https://via.placeholder.com/150/f0f0f0?text=Product' }} style={styles.cartImage} />
@@ -26,19 +21,16 @@ const CartScreen = () => {
                 <Text style={styles.itemPrice}>฿{item.price.toFixed(2)}</Text>
             </View>
             <View style={styles.quantityControl}>
-                {/* ปุ่มลดจำนวน / ลบ */}
                 <TouchableOpacity onPress={() => updateQuantity(item.id, item.quantity - 1)}>
                     <MaterialIcons name="remove-circle" size={26} color="#FF9800" />
                 </TouchableOpacity>
 
                 <Text style={styles.itemQuantity}>{item.quantity}</Text>
                 
-                {/* ปุ่มเพิ่มจำนวน */}
                 <TouchableOpacity onPress={() => updateQuantity(item.id, item.quantity + 1)}>
                     <MaterialIcons name="add-circle" size={26} color="#4CAF50" />
                 </TouchableOpacity>
 
-                {/* ปุ่มลบสินค้าออกจากตะกร้า */}
                 <TouchableOpacity onPress={() => removeItem(item.id)} style={{ marginLeft: 15 }}>
                      <MaterialIcons name="delete" size={24} color="#F44336" />
                 </TouchableOpacity>
@@ -49,14 +41,13 @@ const CartScreen = () => {
     return (
         <View style={styles.container}>
             <FlatList
-                data={cartItems} // ใช้ข้อมูลจริงจาก Context
+                data={cartItems} 
                 renderItem={renderCartItem}
                 keyExtractor={item => item.id}
                 contentContainerStyle={{ paddingBottom: 10 }}
                 ListEmptyComponent={<Text style={styles.emptyText}>ไม่มีสินค้าในตะกร้า</Text>}
             />
             
-            {/* แสดงปุ่มล้างตะกร้าหากมีสินค้า */}
             {cartItems.length > 0 && (
                 <Button 
                     title="ล้างตะกร้าทั้งหมด" 
@@ -68,7 +59,7 @@ const CartScreen = () => {
             <View style={styles.summaryContainer}>
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>รวมสุทธิ:</Text>
-                    <Text style={styles.summaryValue}>฿{cartTotal.toFixed(2)}</Text> {/* แสดงยอดรวมจาก Context */}
+                    <Text style={styles.summaryValue}>฿{cartTotal.toFixed(2)}</Text> 
                 </View>
                 
                 <Button 

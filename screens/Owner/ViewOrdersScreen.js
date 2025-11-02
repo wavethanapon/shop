@@ -1,224 +1,278 @@
-// screens/Owner/ViewOrdersScreen.js
-import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    FlatList, 
+    ActivityIndicator, 
+    TouchableOpacity,
+    Alert 
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 
-// สถานะคำสั่งซื้อทั้งหมด
-const ORDER_STATUS = {
-    WAITING_PAYMENT: { text: 'รอชำระเงิน', color: '#FF9800', icon: 'payment' },
-    PAYMENT_PENDING: { text: 'รอตรวจสอบหลักฐาน', color: '#FFC107', icon: 'hourglass-full' },
-    RECEIVED: { text: 'รับคำสั่งซื้อแล้ว', color: '#1E88E5', icon: 'schedule' },
-    IN_PROGRESS: { text: 'กำลังทำ', color: '#2196F3', icon: 'hourglass-empty' },
-    COMPLETED: { text: 'เสร็จสิ้น', color: '#4CAF50', icon: 'check-circle' },
-    CANCELLED: { text: 'ยกเลิก', color: '#F44336', icon: 'cancel' },
-};
-
-// ข้อมูลคำสั่งซื้อจำลอง (Order ID ต้องตรงกับ MOCK_ORDER_DATA ใน OrderDetailScreen)
-const MOCK_OWNER_ORDERS = [
-    { 
-        id: 'o005', 
-        customer: 'สมศรี', 
-        date: 'วันนี้ 10:30', 
-        total: 180.00, 
-        status: 'PAYMENT_PENDING', // ต้องตรวจสอบหลักฐาน (5.6)
-        paymentProofUrl: 'https://via.placeholder.com/150/00bcd4/ffffff?text=Proof_O005', 
-        items: ['กาแฟเย็น x 2', 'ชาเขียวปั่น x 1'] 
-    },
-    { 
-        id: 'o006', 
-        customer: 'มานะ', 
-        date: 'วันนี้ 09:15', 
-        total: 95.00, 
-        status: 'RECEIVED', 
-        paymentProofUrl: 'https://via.placeholder.com/150/4CAF50/ffffff?text=Proof_O006',
-        items: ['เค้กช็อกโกแลต x 1', 'กาแฟเย็น x 0.5'] 
-    },
-    { 
-        id: 'o007', 
-        customer: 'สมหมาย', 
-        date: 'เมื่อวาน 15:45', 
-        total: 300.00, 
-        status: 'COMPLETED',
-        paymentProofUrl: null,
-        items: ['แซนวิชแฮมชีส x 5'] 
-    },
-];
+import { db } from '../../firebaseConfig'; 
+import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'; 
 
 const ViewOrdersScreen = () => {
     const navigation = useNavigation();
-    const [orders, setOrders] = useState(MOCK_OWNER_ORDERS);
 
-    // ฟังก์ชันจำลองการอัปเดตสถานะคำสั่งซื้อ (ใช้ในปุ่ม "เริ่มทำ" "เสร็จสิ้น" "ยกเลิก")
-    const updateOrderStatus = (orderId, newStatus) => {
-        setOrders(prevOrders => prevOrders.map(order => 
-            order.id === orderId ? { ...order, status: newStatus } : order
-        ));
-        Alert.alert("อัปเดตสำเร็จ", `Order #${orderId} เปลี่ยนสถานะเป็น ${ORDER_STATUS[newStatus].text}`);
-    };
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const renderOrderItem = ({ item }) => {
-        const statusDetail = ORDER_STATUS[item.status] || ORDER_STATUS.RECEIVED;
+    useEffect(() => {
+        const ordersQuery = query(
+            collection(db, "orders"),
+            orderBy("createdAt", "desc")
+        );
 
-        return (
-            <TouchableOpacity 
-                style={[styles.orderItem, { borderLeftColor: statusDetail.color }]}
-                // คลิกที่รายการเพื่อไปดูรายละเอียด (Order Detail)
-                onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })} 
-            >
-                <View style={styles.rowHeader}>
-                    <Text style={styles.orderId}>#{item.id} ({item.customer})</Text>
-                    <View style={[styles.statusBadge, { backgroundColor: statusDetail.color + '15' }]}>
-                        <MaterialIcons name={statusDetail.icon} size={16} color={statusDetail.color} />
-                        <Text style={[styles.statusText, { color: statusDetail.color }]}>
-                            {statusDetail.text}
-                        </Text>
-                    </View>
-                </View>
+        const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+            const fetchedOrders = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    createdAt: data.createdAt ? data.createdAt.toDate().toLocaleString('th-TH') : 'N/A'
+                };
+            });
+            setOrders(fetchedOrders);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching all orders: ", error);
+            setLoading(false);
+            Alert.alert("ข้อผิดพลาด", "ไม่สามารถดึงข้อมูลคำสั่งซื้อทั้งหมดได้");
+        });
 
-                <Text style={styles.orderDate}>วันที่: {item.date}</Text>
-                <Text style={styles.orderTotal}>ยอดรวม: **฿{item.total.toFixed(2)}**</Text>
+        return () => unsubscribe();
+    }, []);
 
-                <View style={styles.actionContainer}>
-                    {/* ปุ่มตรวจสอบหลักฐานการโอนเงิน (5.6) - นำไปหน้า OrderDetail */}
-                    {item.status === 'PAYMENT_PENDING' && item.paymentProofUrl && (
-                        <TouchableOpacity 
-                            style={[styles.actionButton, { backgroundColor: ORDER_STATUS.PAYMENT_PENDING.color }]}
-                            onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
-                        >
-                            <MaterialIcons name="receipt-long" size={16} color="#fff" />
-                            <Text style={styles.actionButtonText}>ตรวจสอบหลักฐาน</Text>
-                        </TouchableOpacity>
-                    )}
+    const handleUpdateStatus = async (orderId, currentStatus) => {
+        const nextStatus = 
+            currentStatus === 'PAYMENT_PENDING' ? 'PROCESSING' :
+            currentStatus === 'PROCESSING' ? 'COMPLETED' : 
+            'PAYMENT_PENDING'; 
+        const actionText = 
+            currentStatus === 'PAYMENT_PENDING' ? 'ตรวจสอบชำระเงินและเริ่มจัดทำ' :
+            currentStatus === 'PROCESSING' ? 'เสร็จสมบูรณ์' : 
+            'เปลี่ยนสถานะ';
 
-                    {/* ปุ่มสำหรับเปลี่ยนสถานะ (ตัวอย่าง: เริ่มทำ) */}
-                    {item.status === 'RECEIVED' && (
-                        <TouchableOpacity 
-                            style={[styles.actionButton, { backgroundColor: ORDER_STATUS.IN_PROGRESS.color }]}
-                            onPress={() => updateOrderStatus(item.id, 'IN_PROGRESS')}
-                        >
-                            <MaterialIcons name="play-arrow" size={16} color="#fff" />
-                            <Text style={styles.actionButtonText}>เริ่มทำ</Text>
-                        </TouchableOpacity>
-                    )}
-                     {/* ปุ่มสำหรับเปลี่ยนสถานะ (ตัวอย่าง: เสร็จสิ้น) */}
-                    {item.status === 'IN_PROGRESS' && (
-                        <TouchableOpacity 
-                            style={[styles.actionButton, { backgroundColor: ORDER_STATUS.COMPLETED.color }]}
-                            onPress={() => updateOrderStatus(item.id, 'COMPLETED')}
-                        >
-                            <MaterialIcons name="done-all" size={16} color="#fff" />
-                            <Text style={styles.actionButtonText}>เสร็จสิ้น</Text>
-                        </TouchableOpacity>
-                    )}
-                    {/* ปุ่มยกเลิก */}
-                    {item.status !== 'CANCELLED' && item.status !== 'COMPLETED' && (
-                        <TouchableOpacity 
-                            style={[styles.actionButton, { backgroundColor: ORDER_STATUS.CANCELLED.color, marginLeft: 10 }]}
-                            onPress={() => updateOrderStatus(item.id, 'CANCELLED')}
-                        >
-                            <MaterialIcons name="close" size={16} color="#fff" />
-                            <Text style={styles.actionButtonText}>ยกเลิก</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </TouchableOpacity>
+        Alert.alert(
+            "ยืนยันการเปลี่ยนสถานะ",
+            `ต้องการเปลี่ยนสถานะคำสั่งซื้อ #${orderId.substring(0, 6).toUpperCase()} เป็น "${actionText}" หรือไม่?`,
+            [
+                { text: "ยกเลิก", style: "cancel" },
+                { text: "ยืนยัน", onPress: async () => {
+                    try {
+                        const orderRef = doc(db, "orders", orderId);
+                        await updateDoc(orderRef, {
+                            status: nextStatus
+                        });
+                        Alert.alert("สำเร็จ", `สถานะถูกเปลี่ยนเป็น ${nextStatus} เรียบร้อยแล้ว`);
+                    } catch (error) {
+                        console.error("Error updating status: ", error);
+                        Alert.alert("ข้อผิดพลาด", "ไม่สามารถอัปเดตสถานะได้");
+                    }
+                }}
+            ]
         );
     };
 
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case 'PAYMENT_PENDING':
+                return { text: 'รอตรวจสอบชำระเงิน', color: '#FF9800' };
+            case 'PROCESSING':
+                return { text: 'กำลังจัดทำ/จัดส่ง', color: '#2196F3' };
+            case 'COMPLETED':
+                return { text: 'เสร็จสมบูรณ์', color: '#4CAF50' };
+            default:
+                return { text: status, color: '#9E9E9E' };
+        }
+    };
+
+    const renderOrderItem = ({ item }) => {
+        const status = getStatusStyle(item.status);
+
+        return (
+            <View style={styles.orderCard}>
+                <View style={styles.headerRow}>
+                    <Text style={styles.orderIdText}>#ODR-{item.id.substring(0, 6).toUpperCase()}</Text>
+                    <Text style={[styles.statusBadge, { backgroundColor: status.color }]}>{status.text}</Text>
+                </View>
+
+                <Text style={styles.customerEmail}>{item.customerEmail}</Text>
+                
+                <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>รายการสินค้า:</Text>
+                    <Text style={styles.detailValue}>{item.items.length} ชิ้น</Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>ยอดรวมสุทธิ:</Text>
+                    <Text style={styles.totalAmount}>฿{item.totalAmount.toFixed(2)}</Text>
+                </View>
+                
+                <Text style={styles.dateText}>วันที่สั่ง: {item.createdAt}</Text>
+
+                <TouchableOpacity 
+                    style={styles.detailButton} 
+                    onPress={() => {
+                        // ** ในแอปจริง ควรนำทางไปหน้า OrderDetailScreen **
+                        Alert.alert("รายละเอียด", "แสดงรายละเอียดสินค้าและหลักฐานการโอนเงิน");
+                    }}
+                >
+                    <Text style={styles.detailButtonText}>ดูรายละเอียด/หลักฐาน</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                    style={[styles.updateStatusButton, { backgroundColor: status.color }]}
+                    onPress={() => handleUpdateStatus(item.id, item.status)}
+                >
+                    <Text style={styles.updateStatusButtonText}>
+                        {item.status === 'COMPLETED' ? 'เสร็จสิ้น' : 'เปลี่ยนสถานะเป็นถัดไป'}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        );
+    };
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FF9800" />
+                <Text style={{ marginTop: 10 }}>กำลังดึงคำสั่งซื้อทั้งหมด...</Text>
+            </View>
+        );
+    }
+
+    if (orders.length === 0) {
+        return (
+            <View style={styles.emptyContainer}>
+                <MaterialIcons name="local-shipping" size={60} color="#ccc" />
+                <Text style={styles.emptyText}>ยังไม่มีคำสั่งซื้อเข้ามาในระบบ</Text>
+            </View>
+        );
+    }
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.header}>คำสั่งซื้อทั้งหมด (5.5)</Text>
-            
-            <FlatList
-                data={orders}
-                renderItem={renderOrderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={{ paddingBottom: 20 }}
-            />
-        </View>
+        <FlatList
+            data={orders}
+            keyExtractor={(item) => item.id}
+            renderItem={renderOrderItem}
+            contentContainerStyle={styles.listContent}
+        />
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    loadingContainer: {
         flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#fff',
+    },
+    emptyText: {
+        fontSize: 18,
+        color: '#999',
+        marginTop: 10,
+    },
+    listContent: {
         padding: 10,
         backgroundColor: '#f5f5f5',
     },
-    header: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        margin: 10,
-        color: '#333',
-    },
-    orderItem: {
+    orderCard: {
         backgroundColor: '#fff',
         padding: 15,
-        marginVertical: 6,
-        marginHorizontal: 5,
-        borderRadius: 10,
+        borderRadius: 8,
+        marginBottom: 10,
         borderLeftWidth: 5,
+        borderLeftColor: '#FF9800',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
-        elevation: 3,
+        elevation: 2,
     },
-    rowHeader: {
+    headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 5,
     },
-    orderId: {
+    orderIdText: {
         fontSize: 16,
+        fontWeight: 'bold',
+        color: '#555',
+    },
+    statusBadge: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#fff',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 4,
+        overflow: 'hidden',
+    },
+    customerEmail: {
+        fontSize: 14,
+        color: '#2196F3',
+        marginBottom: 5,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 2,
+    },
+    detailLabel: {
+        fontSize: 14,
+        color: '#777',
+    },
+    detailValue: {
+        fontSize: 14,
         fontWeight: 'bold',
         color: '#333',
     },
-    statusBadge: {
-        flexDirection: 'row',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 20,
-        alignItems: 'center',
-    },
-    statusText: {
-        fontSize: 13,
+    totalAmount: {
+        fontSize: 16,
         fontWeight: 'bold',
-        marginLeft: 4,
+        color: '#E91E63',
     },
-    orderDate: {
-        fontSize: 13,
-        color: '#777',
-        marginBottom: 5,
-    },
-    orderTotal: {
-        fontSize: 15,
-        fontWeight: 'bold',
-        color: '#000',
+    dateText: {
+        fontSize: 12,
+        color: '#999',
         marginTop: 5,
+        textAlign: 'right',
     },
-    actionContainer: {
-        flexDirection: 'row',
+    // ปุ่ม
+    detailButton: {
         marginTop: 10,
-        paddingTop: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#eee',
-    },
-    actionButton: {
-        flexDirection: 'row',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+        padding: 8,
+        backgroundColor: '#E0E0E0',
         borderRadius: 5,
         alignItems: 'center',
     },
-    actionButtonText: {
-        color: '#fff',
-        fontSize: 13,
+    detailButtonText: {
+        fontSize: 14,
+        color: '#333',
         fontWeight: 'bold',
-        marginLeft: 5,
-    }
+    },
+    updateStatusButton: {
+        marginTop: 8,
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+    },
+    updateStatusButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
 });
 
 export default ViewOrdersScreen;

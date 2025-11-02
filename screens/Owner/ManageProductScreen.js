@@ -1,5 +1,3 @@
-// screens/Owner/ManageProductScreen.js
-
 import React, { useState, useEffect } from 'react';
 import { 
     View, 
@@ -16,13 +14,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker'; 
 import { useNavigation, useRoute } from '@react-navigation/native';
 
-// NOTE: ต้องติดตั้ง Expo Image Picker ก่อน: expo install expo-image-picker
 
 const ManageProductScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     
-    // รับพารามิเตอร์ product หากเป็นการแก้ไข (Edit Mode)
     const existingProduct = route.params?.product;
 
     const [name, setName] = useState(existingProduct?.name || '');
@@ -30,17 +26,14 @@ const ManageProductScreen = () => {
     const [stock, setStock] = useState(existingProduct?.stock.toString() || '');
     const [description, setDescription] = useState(existingProduct?.description || '');
     const [imageUri, setImageUri] = useState(existingProduct?.imageUrl || null);
-    
-    // ตั้งค่า Header Title ตามโหมดการทำงาน
+
     useEffect(() => {
         navigation.setOptions({
             title: existingProduct ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่',
         });
     }, [navigation, existingProduct]);
 
-    // ฟังก์ชันสำหรับเลือกรูปภาพจากแกลเลอรี่ (5.4)
     const pickImage = async () => {
-        // ขออนุญาตการเข้าถึงคลังรูปภาพ
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
             Alert.alert('Permission required', 'Need media library permissions to upload product image.');
@@ -73,13 +66,8 @@ const ManageProductScreen = () => {
             stock: parseInt(stock),
             description,
             imageUrl: imageUri,
-            // ในแอปจริง: ต้องเพิ่ม category, status, etc.
+            
         };
-
-        // *** ในแอปจริง:
-        // 1. ถ้า imageUri เป็น URI ใหม่ (จากมือถือ): อัปโหลดรูปภาพไปยัง Server/Storage 
-        // 2. ถ้า imageUri เป็น URL เดิม: ไม่ต้องอัปโหลดรูปภาพซ้ำ
-        // 3. เรียก API เพื่อบันทึก/อัปเดต productData 
         
         const action = existingProduct ? 'แก้ไข' : 'เพิ่ม';
         Alert.alert(
@@ -87,7 +75,6 @@ const ManageProductScreen = () => {
             `สินค้า ${name} ถูก${action}แล้ว!`
         );
 
-        // นำทางกลับไปยังหน้า Product List
         navigation.goBack(); 
     };
     
@@ -96,8 +83,7 @@ const ManageProductScreen = () => {
             <Text style={styles.header}>
                 {existingProduct ? 'แก้ไขสินค้า (5.3)' : 'เพิ่มสินค้าใหม่ (5.3)'}
             </Text>
-            
-            {/* รูปภาพสินค้า */}
+
             <Text style={styles.label}>รูปภาพสินค้า (5.4):</Text>
             <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
                 {imageUri ? (
@@ -110,7 +96,6 @@ const ManageProductScreen = () => {
                 )}
             </TouchableOpacity>
 
-            {/* ฟอร์มข้อมูลสินค้า */}
             <Text style={styles.label}>ชื่อสินค้า:</Text>
             <TextInput
                 style={styles.input}

@@ -1,170 +1,127 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+
 import { useAuth } from '../../context/AuthContext'; 
-import { MaterialIcons } from '@expo/vector-icons';
 
-const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState(''); 
-  const [password, setPassword] = useState('');
-  const { login } = useAuth(); 
-  const [loading, setLoading] = useState(false);
-  
-  const handleLogin = async () => {
-    if (!email || !password) { // <--- แก้ไข
-        Alert.alert("ข้อผิดพลาด", "กรุณากรอกอีเมลและรหัสผ่าน");
-        return;
-    }
-    
-    setLoading(true);
-    try {
-        await login(email, password); // <--- แก้ไข
-    } catch (error) {
-        console.error("Login Failed:", error.code);
-        let errorMessage = "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
-        
-        // --- แก้ไข Error Code ---
-        if (error.code === 'auth/invalid-email') { 
-            errorMessage = "รูปแบบอีเมลไม่ถูกต้อง";
+const LoginScreen = () => {
+    const navigation = useNavigation();
+    const { login } = useAuth(); 
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleLogin = async () => {
+        if (email.trim() === '' || password.trim() === '') {
+            Alert.alert('ข้อผิดพลาด', 'กรุณากรอกอีเมลและรหัสผ่าน');
+            return;
         }
-        // ---
-        
-        Alert.alert("เข้าสู่ระบบไม่สำเร็จ", errorMessage);
-    } finally {
-        setLoading(false);
-    }
-  };
 
-  return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.header}>                
-                <MaterialIcons name="fastfood" size={60} color="#673AB7" />
-                <Text style={styles.appName}>Meatball Shop</Text>
-                <Text style={styles.subtitle}>เข้าสู่ระบบจัดการและสั่งซื้อ</Text>
-            </View>
+        setLoading(true);
+        try {
+            await login(email, password);
+        } catch (error) {
+            console.error('Login Error:', error);
+            let errorMessage = 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                errorMessage = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+            }
+            Alert.alert('เข้าสู่ระบบไม่สำเร็จ', errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-            <View style={styles.card}>
-                <Text style={styles.cardTitle}>ล็อกอิน</Text>
-                
-                {/* Input: Email */}
-                <View style={styles.inputGroup}>
-                    <MaterialIcons name="account-circle" size={24} color="#673AB7" />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="อีเมล (owner@test.com / customer@test.com)"
-                        placeholderTextColor="#999"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
-                </View>
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>เข้าสู่ระบบร้านค้า</Text>
+            
+            <TextInput
+                style={styles.input}
+                placeholder="อีเมล (เช่น owner@test.com)"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+            />
+            
+            <TextInput
+                style={styles.input}
+                placeholder="รหัสผ่าน"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+            />
 
-                {/* Input: Password */}
-                <View style={styles.inputGroup}>
-                    <MaterialIcons name="lock" size={20} color="#673AB7" style={styles.icon} />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="รหัสผ่าน (123456)"
-                        placeholderTextColor="#999"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
-                </View>
-
-                {/* ปุ่ม Login */}
-                <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <TouchableOpacity 
+                style={[styles.button, styles.loginButton]}
+                onPress={handleLogin}
+                disabled={loading}
+            >
+                {loading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                ) : (
                     <Text style={styles.buttonText}>เข้าสู่ระบบ</Text>
-                </TouchableOpacity>
+                )}
+            </TouchableOpacity>
 
-                {/* ปุ่ม Register */}
-                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                    <Text style={styles.registerText}>ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+            <TouchableOpacity 
+                style={styles.registerLink}
+                onPress={() => navigation.navigate('Register')}
+            >
+                <Text style={styles.registerText}>ยังไม่มีบัญชี? <Text style={{ fontWeight: 'bold' }}>สมัครสมาชิก</Text></Text>
+            </TouchableOpacity>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        flexGrow: 1,
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
-        backgroundColor: '#E8EAF6', // สีพื้นหลังโทนม่วงอ่อน
-    },
-    header: {
-        alignItems: 'center',
-        marginBottom: 30,
-    },
-    appName: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#3F51B5', // สีน้ำเงินเข้ม
-        marginTop: 10,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: '#673AB7', // สีม่วง
-        marginTop: 5,
-    },
-    card: {
-        width: '95%',
-        maxWidth: 400,
         backgroundColor: '#fff',
-        padding: 25,
-        borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-        elevation: 6,
     },
-    cardTitle: {
-        fontSize: 24,
+    title: {
+        fontSize: 28,
         fontWeight: 'bold',
-        marginBottom: 20,
-        textAlign: 'center',
+        marginBottom: 30,
         color: '#333',
-    },
-    inputGroup: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 15,
-        borderWidth: 1,
-        borderColor: '#BDBDBD',
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        backgroundColor: '#FAFAFA',
-    },
-    icon: {
-        marginRight: 10,
     },
     input: {
-        flex: 1,
+        width: '100%',
         height: 50,
+        backgroundColor: '#f0f0f0',
+        borderRadius: 8,
+        paddingHorizontal: 15,
+        marginBottom: 15,
         fontSize: 16,
-        color: '#333',
+        borderWidth: 1,
+        borderColor: '#ddd',
     },
-    loginButton: {
-        backgroundColor: '#673AB7', // สีม่วงหลัก
+    button: {
+        width: '100%',
         padding: 15,
         borderRadius: 8,
         alignItems: 'center',
-        marginTop: 10,
-        marginBottom: 15,
+        marginBottom: 10,
+    },
+    loginButton: {
+        backgroundColor: '#4CAF50',
     },
     buttonText: {
         color: '#fff',
         fontSize: 18,
         fontWeight: 'bold',
     },
+    registerLink: {
+        marginTop: 20,
+    },
     registerText: {
-        textAlign: 'center',
-        color: '#3F51B5',
-        fontSize: 14,
-        marginTop: 10,
+        fontSize: 15,
+        color: '#555',
     }
 });
 

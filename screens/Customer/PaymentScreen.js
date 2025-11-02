@@ -1,137 +1,269 @@
 import React, { useState } from 'react';
-import { 
-    View, 
-    Text, 
-    StyleSheet, 
-    Button, 
-    ScrollView, 
-    Alert, 
-    Image, 
-    TouchableOpacity, 
-    TextInput 
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker'; 
-import { useNavigation, useRoute } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
+
+import { useCart } from '../../context/CartContext'; 
+import { db, auth } from '../../firebaseConfig'; 
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; 
 
 const PaymentScreen = () => {
     const navigation = useNavigation();
-    const route = useRoute();
-    
-    // สถานะสำหรับเก็บ URI ของรูปภาพหลักฐานการโอนเงินและข้อมูลฟอร์ม
-    const [imageUri, setImageUri] = useState(null);
-    const [senderName, setSenderName] = useState('');
-    const [amount, setAmount] = useState('210.00'); // ยอดรวมจำลอง
+    const { cartTotal, cartItems, clearCart } = useCart();
 
-    // ฟังก์ชันสำหรับเลือกรูปภาพจากแกลเลอรี่ (4.4)
-    const pickImage = async () => {
-        // ขออนุญาตการเข้าถึงคลังรูปภาพ
+    const [paymentProofUri, setPaymentProofUri] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const bankDetails = {
+        bank: 'ธนาคารกรุงเทพ',
+        accountName: 'บริษัท นอนน้อย จำกัด',
+        accountNumber: '123-4-56789-0',
+    };
+
+    const handleImagePick = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        
         if (status !== 'granted') {
-            Alert.alert('Permission required', 'Need media library permissions to upload proof of transfer.');
+            Alert.alert(
+                'สิทธิ์ไม่เพียงพอ', 
+                'โปรดอนุญาตให้แอปเข้าถึงคลังรูปภาพเพื่ออัปโหลดหลักฐานการโอนเงิน'
+            );
             return;
         }
 
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ImagePicker.MediaTypeOptions.Images, 
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
         });
 
-        if (!result.canceled) {
-            setImageUri(result.assets[0].uri);
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            setPaymentProofUri(result.assets[0].uri);
         }
     };
 
-    // ฟังก์ชันสำหรับส่งหลักฐานการโอนเงิน
-    const handleSubmitProof = () => {
-        if (!imageUri || !senderName || !amount) {
-            Alert.alert("ข้อมูลไม่ครบถ้วน", "กรุณากรอกชื่อผู้โอน ยอดเงิน และอัปโหลดหลักฐาน");
+    const handleConfirmOrder = async () => { 
+        if (cartItems.length === 0) {
+            Alert.alert("ตะกร้าว่าง", "กรุณาสั่งสินค้าก่อน");
+            navigation.navigate('CustomerDashboard');
+            return;
+        }
+        
+        if (!paymentProofUri) {
+            Alert.alert("หลักฐานการโอนเงิน", "กรุณาอัปโหลดหลักฐานการโอนเงินก่อนยืนยันคำสั่งซื้อ");
+            return;
+        }
+        
+        if (!auth.currentUser) {
+            Alert.alert("ข้อผิดพลาด", "กรุณาล็อกอินเพื่อยืนยันคำสั่งซื้อ");
             return;
         }
 
-        // *** ในแอปจริง: อัปโหลดรูปภาพไปยัง Server และส่งข้อมูลยืนยันการชำระเงิน ***
-        
-        Alert.alert(
-            "ส่งหลักฐานสำเร็จ", 
-            "ระบบได้รับหลักฐานการโอนเงินของคุณแล้ว และจะตรวจสอบภายใน 10 นาที"
-        );
-        
-        // นำทางไปยังหน้าประวัติคำสั่งซื้อ
-        navigation.navigate('OrderHistory'); 
+        setIsUploading(true);
+
+        try {
+            const orderData = {
+                userId: auth.currentUser.uid,
+                customerEmail: auth.currentUser.email,
+                items: cartItems.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                })),
+                totalAmount: cartTotal,
+                status: 'PAYMENT_PENDING',
+                paymentProofUrl: paymentProofUri, 
+                createdAt: serverTimestamp(),
+            };
+
+            const docRef = await addDoc(collection(db, "orders"), orderData); 
+
+            Alert.alert(
+                "สั่งซื้อสำเร็จ!", 
+                `คำสั่งซื้อ #${docRef.id} ถูกบันทึกแล้ว รอการตรวจสอบหลักฐานการโอนเงิน`,
+                [
+                    { 
+                        text: "ตกลง", 
+                        onPress: () => {
+                            clearCart();
+                            navigation.navigate('OrderHistory');
+                        }
+                    }
+                ]
+            );
+
+        } catch (error) {
+            console.error("Error adding order: ", error);
+            Alert.alert("ข้อผิดพลาด", "ไม่สามารถบันทึกคำสั่งซื้อได้: " + error.message);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.title}>ขั้นตอนที่ 2: ชำระเงิน</Text>
-            
-            {/* กล่องข้อมูลบัญชีธนาคาร */}
-            <View style={styles.bankInfoBox}>
-                <MaterialIcons name="account-balance" size={24} color="#333" />
-                <Text style={styles.bankText}>ธนาคาร: กรุงไทย (KTB)</Text>
-                <Text style={styles.bankText}>เลขที่บัญชี: 123-4-56789-0</Text>
-                <Text style={styles.bankText}>ชื่อบัญชี: My Shop (ยอดรวม: **฿{parseFloat(amount).toFixed(2)}**)</Text>
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>1. สรุปยอดรวม</Text>
+                <View style={styles.summaryBox}>
+                    <Text style={styles.summaryLabel}>รวมสินค้าทั้งหมด:</Text>
+                    <Text style={styles.summaryTotal}>฿{cartTotal.toFixed(2)}</Text>
+                </View>
             </View>
 
-            {/* ฟอร์มกรอกข้อมูล */}
-            <Text style={styles.label}>ชื่อผู้โอน:</Text>
-            <TextInput
-                style={styles.input}
-                value={senderName}
-                onChangeText={setSenderName}
-                placeholder="กรอกชื่อบัญชีที่โอนเงินมา"
-            />
-            
-            <Text style={styles.label}>ยอดเงินที่โอน:</Text>
-            <TextInput
-                style={styles.input}
-                value={amount}
-                onChangeText={setAmount}
-                keyboardType="numeric"
-                placeholder="ระบุยอดเงินที่โอนจริง"
-            />
-
-            {/* ปุ่มเลือกรูปภาพ */}
-            <Text style={styles.label}>อัปโหลดหลักฐานการโอนเงิน (4.4):</Text>
-            <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
-                 <MaterialIcons name="add-a-photo" size={24} color="#007bff" />
-                <Text style={styles.imagePickerText}>เลือกรูปภาพหลักฐาน</Text>
-            </TouchableOpacity>
-
-            {/* แสดงตัวอย่างรูปภาพที่เลือก */}
-            {imageUri && (
-                <>
-                    <Text style={styles.previewLabel}>รูปภาพหลักฐาน:</Text>
-                    <Image source={{ uri: imageUri }} style={styles.previewImage} />
-                </>
-            )}
-
-            {/* ปุ่มยืนยันการโอนเงิน */}
-            <View style={{ marginTop: 30, marginBottom: 50 }}>
-                <Button 
-                    title="ยืนยันการโอนเงิน"
-                    onPress={handleSubmitProof}
-                    disabled={!imageUri}
-                    color="#4CAF50"
-                />
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>2. รายละเอียดการโอนเงิน</Text>
+                <View style={styles.bankDetailBox}>
+                    <Text style={styles.bankName}>{bankDetails.bank}</Text>
+                    <Text style={styles.detailText}>ชื่อบัญชี: {bankDetails.accountName}</Text>
+                    <Text style={styles.accountNumber}>เลขที่บัญชี: {bankDetails.accountNumber}</Text>
+                </View>
+                <Text style={styles.instruction}>*กรุณาโอนเงินตามยอดรวมสุทธิ แล้วอัปโหลดหลักฐานด้านล่าง</Text>
             </View>
+
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>3. อัปโหลดหลักฐานการโอนเงิน</Text>
+                
+                {paymentProofUri && (
+                    <Image source={{ uri: paymentProofUri }} style={styles.proofImage} />
+                )}
+
+                <TouchableOpacity 
+                    style={styles.uploadButton}
+                    onPress={handleImagePick}
+                    disabled={isUploading}
+                >
+                    <MaterialIcons name="cloud-upload" size={24} color="#fff" />
+                    <Text style={styles.uploadButtonText}>
+                        {paymentProofUri ? 'เปลี่ยนหลักฐานการโอน' : 'เลือกรูปหลักฐานการโอนเงิน'}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+            
+            <View style={styles.confirmBox}>
+                <TouchableOpacity 
+                    style={[styles.confirmButton, isUploading && styles.disabledButton]}
+                    onPress={handleConfirmOrder}
+                    disabled={isUploading || cartItems.length === 0}
+                >
+                    {isUploading ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                        <Text style={styles.confirmButtonText}>ยืนยันคำสั่งซื้อ</Text>
+                    )}
+                </TouchableOpacity>
+            </View>
+            <View style={{ height: 50 }} />
         </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
-    // ... สไตล์ทั้งหมด ...
-    container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-    title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#333' },
-    bankInfoBox: { backgroundColor: '#e0f7fa', padding: 15, borderRadius: 8, borderLeftWidth: 5, borderLeftColor: '#00bcd4', marginBottom: 20 },
-    bankText: { fontSize: 16, marginVertical: 3, color: '#333' },
-    label: { fontSize: 16, fontWeight: '600', marginTop: 15, marginBottom: 5, color: '#555' },
-    input: { height: 45, borderColor: '#ddd', borderWidth: 1, paddingHorizontal: 10, borderRadius: 6 },
-    imagePickerButton: { flexDirection: 'row', backgroundColor: '#eaf4ff', padding: 12, borderRadius: 6, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#007bff', marginTop: 5 },
-    imagePickerText: { marginLeft: 10, color: '#007bff', fontWeight: 'bold', fontSize: 15 },
-    previewLabel: { fontSize: 16, fontWeight: '600', marginTop: 15, marginBottom: 10 },
-    previewImage: { width: '100%', height: 300, borderRadius: 8, borderWidth: 1, borderColor: '#ccc' }
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+        padding: 10,
+    },
+    section: {
+        backgroundColor: '#fff',
+        padding: 15,
+        borderRadius: 8,
+        marginBottom: 10,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        color: '#333',
+    },
+    summaryBox: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 10,
+        backgroundColor: '#e3f2fd',
+        borderRadius: 5,
+        borderLeftWidth: 5,
+        borderLeftColor: '#2196F3',
+    },
+    summaryLabel: {
+        fontSize: 16,
+        color: '#555',
+    },
+    summaryTotal: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#2196F3',
+    },
+    bankDetailBox: {
+        padding: 10,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 5,
+        borderWidth: 1,
+        borderColor: '#eee',
+    },
+    bankName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#4CAF50',
+        marginBottom: 5,
+    },
+    accountNumber: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginTop: 5,
+    },
+    detailText: {
+        fontSize: 15,
+        color: '#555',
+    },
+    instruction: {
+        fontSize: 13,
+        color: '#F44336',
+        marginTop: 10,
+    },
+    proofImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        marginBottom: 15,
+        backgroundColor: '#f0f0f0',
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    uploadButton: {
+        flexDirection: 'row',
+        backgroundColor: '#FF9800',
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    uploadButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginLeft: 10,
+    },
+    confirmBox: {
+        padding: 10,
+    },
+    confirmButton: {
+        backgroundColor: '#4CAF50',
+        padding: 15,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    confirmButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    disabledButton: {
+        backgroundColor: '#ccc',
+    }
 });
 
 export default PaymentScreen;

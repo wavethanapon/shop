@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Button } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useAuth } from '../context/AuthContext'; // ต้องปรับ path ให้ถูกต้องตามโครงสร้างจริง
-import { db } from '../firebaseConfig'; // <-- นำเข้า 'db' เพื่อใช้งาน Firestore
-// ... เขียนโค้ดเรียกใช้ db เช่น collection(db, 'products')
-// ข้อมูลจำลองโปรไฟล์ผู้ใช้ (ในแอปจริงจะดึงมาจาก API)
+import { useAuth } from '../context/AuthContext'; 
+import { db } from '../firebaseConfig'; 
 const MOCK_PROFILE_DATA = {db};
 
 const ProfileScreen = () => {
-    const { userRole, userEmail } = useAuth(); // ดึงบทบาทและอีเมลจาก Auth Context
-    
-    // ดึงข้อมูลเริ่มต้นตามบทบาท
+    const { userRole, userEmail } = useAuth(); 
     const initialData = MOCK_PROFILE_DATA[userRole] || MOCK_PROFILE_DATA.customer; 
     
     const [name, setName] = useState(initialData.name);

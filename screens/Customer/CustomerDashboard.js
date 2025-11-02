@@ -1,11 +1,9 @@
-// screens/Customer/CustomerDashboard.js
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useCart } from '../../context/CartContext'; // ดึง Context ตะกร้าสินค้า
+import { useCart } from '../../context/CartContext'; 
 
-// NOTE: ในแอปจริง ข้อมูลเหล่านี้จะถูกดึงมาจาก API/Server
 const MOCK_PRODUCTS = [
     { 
         id: 'p1', 
