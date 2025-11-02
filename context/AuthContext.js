@@ -1,98 +1,121 @@
-// context/AuthContext.js (เวอร์ชันแก้ไขถูกต้อง)
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
-} from 'firebase/auth';
-import { auth, db } from '../firebaseConfig';
-import { doc, setDoc } from 'firebase/firestore';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { View, Text, Alert } from 'react-native';
+import { auth } from '../firebaseConfig'; 
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 
 const AuthContext = createContext();
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
-
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+    // กำหนดสถานะเริ่มต้นเป็น null หรือ loading
+    const [user, setUser] = useState(null); 
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userRole, setUserRole] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  // === ฟังก์ชันเข้าสู่ระบบ ===
-  const login = async (email, password) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      console.error("🔥 Login error:", error.code, error.message);
-      throw error;
+    // 1. ติดตามสถานะ Firebase Auth
+    useEffect(() => {
+        // onAuthStateChanged จะทำงานเมื่อสถานะล็อกอินมีการเปลี่ยนแปลง
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (firebaseUser) {
+                // ถ้ามีผู้ใช้ล็อกอินอยู่
+                setUser(firebaseUser);
+                setIsAuthenticated(true);
+                
+                // *** จำลองการกำหนดบทบาทตามอีเมล (ในแอปจริงควรดึงจาก Firestore/Database) ***
+                if (firebaseUser.email === 'owner@test.com') {
+                    setUserRole('owner');
+                } else {
+                    setUserRole('customer');
+                }
+            } else {
+                // ถ้าไม่มีผู้ใช้ล็อกอิน
+                setUser(null);
+                setIsAuthenticated(false);
+                setUserRole(null);
+            }
+            setLoading(false);
+        });
+
+        return unsubscribe; // Cleanup function
+    }, []);
+
+    // 2. ฟังก์ชันล็อกอิน (Sign In)
+    const login = async (email, password) => {
+        try {
+            setLoading(true);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            // สถานะจะถูกจัดการโดย onAuthStateChanged ด้านบน
+            Alert.alert("สำเร็จ", "ล็อกอินเรียบร้อย!");
+        } catch (error) {
+            let errorMessage = "การล็อกอินล้มเหลว";
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                errorMessage = "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+            } else {
+                errorMessage = error.message;
+            }
+            Alert.alert("ข้อผิดพลาด", errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 3. ฟังก์ชันสมัครสมาชิก (Sign Up)
+    const signUp = async (email, password) => {
+        try {
+            setLoading(true);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            // สถานะจะถูกจัดการโดย onAuthStateChanged ด้านบน
+            Alert.alert("สำเร็จ", `บัญชี ${email} ถูกสร้างเรียบร้อยแล้ว!`);
+            return true;
+        } catch (error) {
+            let errorMessage = "การสมัครสมาชิกล้มเหลว";
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = "อีเมลนี้มีผู้ใช้งานแล้ว";
+            } else {
+                errorMessage = error.message;
+            }
+            Alert.alert("ข้อผิดพลาด", errorMessage);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 4. ฟังก์ชันล็อกเอาท์ (Sign Out)
+    const logout = async () => {
+        try {
+            await signOut(auth);
+            // สถานะจะถูกจัดการโดย onAuthStateChanged ด้านบน
+            Alert.alert("ล็อกเอาท์", "ออกจากระบบเรียบร้อย");
+        } catch (error) {
+            Alert.alert("ข้อผิดพลาด", "ไม่สามารถออกจากระบบได้");
+        }
+    };
+
+    const value = {
+        user,
+        isAuthenticated,
+        userRole,
+        loading,
+        login,
+        logout,
+        signUp, // *** เพิ่ม signUp เข้าใน Context ***
+    };
+
+    if (loading) {
+        // คุณอาจแสดง Loading Screen ที่นี่
+        return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>กำลังโหลด...</Text></View>;
     }
-  };
 
-  // === ฟังก์ชันสมัครสมาชิก ===
-  const register = async (email, password, name) => {
-    try {
-      // 1. สร้างผู้ใช้ใน Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // 2. บันทึกข้อมูลลง Firestore โดยใช้ uid เป็น document id
-      await setDoc(doc(db, "users", user.uid), {
-        name: name,
-        email: user.email,
-        role: "customer",
-        createdAt: new Date()
-      });
-
-      console.log("📤 Firestore saved user:", name, email);
-      console.log("✅ Register success:", user.uid);
-      return userCredential;
-
-    } catch (error) {
-      console.error("🔥 Register error:", error.code, error.message);
-      throw error;
-    }
-  };
-
-  // === ฟังก์ชันออกจากระบบ ===
-  const logout = async () => {
-    try {
-      await signOut(auth);
-      console.log("🚪 User logged out");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
-
-  // === ตรวจสอบสถานะผู้ใช้แบบเรียลไทม์ ===
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log("👤 onAuthStateChanged:", user ? user.email : "no user");
-      setUser(user);
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, []);
-
-  // === ตัวแปรสถานะเพิ่มเติมสำหรับ App.js ===
-  const isAuthenticated = !!user; // แปลงเป็น true/false
-  const isLoading = loading;
-  const userRole = "customer"; // ตั้งค่าเริ่มต้นไว้ก่อน (หรือดึงจาก Firestore ทีหลัง)
-
-  // === ค่าที่ส่งให้ทุกหน้าผ่าน Context ===
-  const value = {
-    user,
-    login,
-    register,
-    logout,
-    isAuthenticated,
-    isLoading,
-    userRole
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
+
+export const useAuth = () => {
+    return useContext(AuthContext);
+};
+
+// **อย่าลืมเพิ่ม 'View' และ 'Text' เข้าใน import จาก 'react-native' ที่นี่ถ้าคุณใช้ Loading Component**

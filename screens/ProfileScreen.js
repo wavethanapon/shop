@@ -1,9 +1,8 @@
-// screens/ProfileScreen.js
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Button } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext'; // ต้องปรับ path ให้ถูกต้องตามโครงสร้างจริง
-import { db } from './firebaseConfig'; // <-- นำเข้า 'db' เพื่อใช้งาน Firestore
+import { db } from '../firebaseConfig'; // <-- นำเข้า 'db' เพื่อใช้งาน Firestore
 // ... เขียนโค้ดเรียกใช้ db เช่น collection(db, 'products')
 // ข้อมูลจำลองโปรไฟล์ผู้ใช้ (ในแอปจริงจะดึงมาจาก API)
 const MOCK_PROFILE_DATA = {db};

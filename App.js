@@ -1,4 +1,3 @@
-// App.js
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
