@@ -1,180 +1,77 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Alert, Button } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Button } from 'react-native';
 import { useAuth } from '../context/AuthContext'; 
 import { db } from '../firebaseConfig'; 
-const MOCK_PROFILE_DATA = {db};
+import { doc, getDoc } from 'firebase/firestore';
 
 const ProfileScreen = () => {
-    const { userRole, userEmail } = useAuth(); 
-    const initialData = MOCK_PROFILE_DATA[userRole] || MOCK_PROFILE_DATA.customer; 
-    
-    const [name, setName] = useState(initialData.name);
-    const [phone, setPhone] = useState(initialData.phone);
-    const [currentPassword, setCurrentPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
+    const { user, logout } = useAuth(); 
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: '#fff',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    inputContainer: {
-        marginBottom: 15,
-    },
-    label: {
-        fontSize: 16,
-        marginBottom: 5,
-        color: '#333',
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 5,
-        padding: 10,
-        fontSize: 16,
-    },
-    button: {
-        backgroundColor: '#007AFF',
-        padding: 15,
-        borderRadius: 5,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-});
-    const [confirmPassword, setConfirmPassword] = useState('');
-
-    const isOwner = userRole === 'owner';
-
-    const handleSaveProfile = () => {
-        if (!name || !phone) {
-            Alert.alert("ข้อผิดพลาด", "กรุณากรอกชื่อและเบอร์โทรศัพท์ให้ครบถ้วน");
-            return;
-        }
-
-        Alert.alert(
-            "บันทึกสำเร็จ", 
-            `ข้อมูลโปรไฟล์ (${userRole}) ถูกอัปเดตแล้ว: \nชื่อ: ${name}\nโทรศัพท์: ${phone}`
-        );
-    };
-
-    const handleChangePassword = () => {
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            Alert.alert("ข้อผิดพลาด", "กรุณากรอกรหัสผ่านให้ครบถ้วน");
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            Alert.alert("ข้อผิดพลาด", "รหัสผ่านใหม่ไม่ตรงกัน");
-            return;
-        }
+    useEffect(() => {
         
-        if (newPassword.length < 6) {
-            Alert.alert("ข้อผิดพลาด", "รหัสผ่านใหม่อย่างน้อย 6 ตัวอักษร");
+        if (!user) {
+            setLoading(false);
             return;
         }
 
-        Alert.alert(
-            "เปลี่ยนรหัสผ่านสำเร็จ", 
-            "รหัสผ่านของคุณถูกเปลี่ยนเรียบร้อยแล้ว"
+        const fetchUserData = async () => {
+            try {
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    setUserData(userDoc.data());
+                } else {
+                    setUserData(null);
+                }
+            } catch (error) {
+                console.error('Error fetching user data: ', error);
+                Alert.alert('Error', 'Failed to fetch user data.');    
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, [user]);
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FF9800" />
+                <Text style={{ marginTop: 10 }}>กำลังโหลดโปรไฟล์...</Text>
+            </View>
         );
-        
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-    };
+    }
+
+    const displayName = userData?.name || 'ไม่ได้ระบุชื่อ';
+    const displayRole = userData?.role || (user?.email === 'owner@test.com' ? 'เจ้าของร้าน' : 'ลูกค้า');
+    const displayEmail = user?.email || 'N/A';
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.header}>
-                {isOwner ? 'จัดการโปรไฟล์เจ้าของร้าน (6.1)' : 'จัดการโปรไฟล์ลูกค้า (3.1, 3.2)'}
-            </Text>
+            <View style={styles.card}>
+                <Text style={styles.title}>ข้อมูลผู้ใช้งาน</Text>
 
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}><MaterialIcons name="person" size={20} color="#333" /> ข้อมูลส่วนตัว</Text>
+                <View style={styles.detailRow}>
+                    <Text style={styles.label}>อีเมล:</Text>
+                    <Text style={styles.value}>{displayEmail}</Text>
+                </View>
                 
-                <Text style={styles.label}>อีเมล (ไม่สามารถแก้ไขได้):</Text>
-                <TextInput
-                    style={[styles.input, styles.disabledInput]}
-                    value={initialData.email}
-                    editable={false}
-                />
-                
-                <Text style={styles.label}>ชื่อ-นามสกุล:</Text>
-                <TextInput
-                    style={styles.input}
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="ชื่อ-นามสกุล"
-                />
-
-                <Text style={styles.label}>เบอร์โทรศัพท์:</Text>
-                <TextInput
-                    style={styles.input}
-                    value={phone}
-                    onChangeText={setPhone}
-                    placeholder="เบอร์โทรศัพท์"
-                    keyboardType="phone-pad"
-                />
-
-                <View style={{ marginTop: 20 }}>
-                    <Button 
-                        title="บันทึกข้อมูลโปรไฟล์"
-                        onPress={handleSaveProfile}
-                        color="#4CAF50"
-                    />
+                <View style={styles.detailRow}>
+                    <Text style={styles.label}>บทบาท:</Text>
+                    <Text style={[styles.value, styles.roleText]}>{displayRole}</Text>
                 </View>
             </View>
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}><MaterialIcons name="lock" size={20} color="#333" /> เปลี่ยนรหัสผ่าน</Text>
-                
-                <Text style={styles.label}>รหัสผ่านเดิม:</Text>
-                <TextInput
-                    style={styles.input}
-                    value={currentPassword}
-                    onChangeText={setCurrentPassword}
-                    secureTextEntry
-                    placeholder="รหัสผ่านเดิม"
-                />
-                
-                <Text style={styles.label}>รหัสผ่านใหม่:</Text>
-                <TextInput
-                    style={styles.input}
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    secureTextEntry
-                    placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)"
-                />
-                
-                <Text style={styles.label}>ยืนยันรหัสผ่านใหม่:</Text>
-                <TextInput
-                    style={styles.input}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry
-                    placeholder="ยืนยันรหัสผ่านใหม่"
-                />
-
-                <View style={{ marginTop: 20, marginBottom: 10 }}>
-                    <Button 
-                        title="เปลี่ยนรหัสผ่าน"
-                        onPress={handleChangePassword}
-                        color="#2196F3"
-                    />
-                </View>
-            </View>
-            <View style={{ height: 50 }} />
+            
+            <TouchableOpacity 
+                style={styles.logoutButton}
+                onPress={logout}
+            >
+                <Text style={styles.logoutButtonText}>ออกจากระบบ</Text>
+            </TouchableOpacity>
         </ScrollView>
     );
 };
@@ -183,52 +80,66 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f5f5f5',
-        padding: 10,
-    },
-    header: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        margin: 10,
-        color: '#333',
-    },
-    section: {
-        backgroundColor: '#fff',
         padding: 15,
-        marginVertical: 5,
-        marginHorizontal: 5,
-        borderRadius: 8,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+    },
+    card: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 10,
+        marginBottom: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowRadius: 4,
         elevation: 3,
     },
-    sectionTitle: {
-        fontSize: 18,
+    title: {
+        fontSize: 22,
         fontWeight: 'bold',
-        marginBottom: 15,
         color: '#333',
+        marginBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        paddingBottom: 10,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
     },
     label: {
-        fontSize: 15,
-        fontWeight: '600',
-        marginTop: 10,
-        marginBottom: 5,
-        color: '#555',
+        fontSize: 16,
+        color: '#777',
     },
-    input: {
-        height: 45,
-        borderColor: '#ddd',
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        borderRadius: 6,
-        backgroundColor: '#fff',
-        fontSize: 15,
+    value: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#333',
     },
-    disabledInput: {
-        backgroundColor: '#f0f0f0',
-        color: '#999',
-    }
+    roleText: {
+        color: '#4CAF50',
+        fontWeight: 'bold',
+    },
+    logoutButton: {
+        backgroundColor: '#F44336',
+        padding: 15,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    logoutButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
 });
 
 export default ProfileScreen;
