@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#f5f5f5',
     },
     title: {
         fontSize: 28,
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     loginButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#1E88E5',
     },
     buttonText: {
         color: '#fff',
